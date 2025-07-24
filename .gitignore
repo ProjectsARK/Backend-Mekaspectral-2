@@ -1,0 +1,33 @@
+# ---- python ----
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# ---- virtual envs ----
+.venv/
+env/
+venv/
+
+# ---- editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- logs / temp ----
+*.log
+*.tmp
+
+# ---- dotenv ----
+.env
+
+# ---- tests artefacts ----
+coverage.*
+pytest_cache/
+
+# ---- Codespaces secrets (if any) ----
+.github/.codespaces/
