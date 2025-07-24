@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 
 # ───── Konfigurasi ──────────────────────────────────────────────
-MODEL_PATH   = os.getenv("MODEL_PATH", "model/soilsense_model.h5")
+MODEL_PATH   = os.getenv("best_model_ann_raw_SOM.h5")
 MODEL_VERSION = os.getenv("MODEL_VERSION", "ann_raw_v1.0")
 
 # Muat model sekali saja saat container start
