@@ -8,11 +8,11 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 
 # ───── Konfigurasi ──────────────────────────────────────────────
-MODEL_PATH   = os.getenv("best_model_ann_raw_SOM.h5")
-MODEL_VERSION = os.getenv("ann_raw_v1.0")
+MODEL_PATH    = os.getenv("MODEL_PATH", "best_model_ann_raw_SOM.h5")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "ann_raw_v1.0")
 
 # Muat model sekali saja saat container start
-MODEL = tf.keras.models.load_model(MODEL_PATH)
+MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
 # ───── Aplikasi FastAPI ────────────────────────────────────────
 app = FastAPI(
