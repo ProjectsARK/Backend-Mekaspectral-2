@@ -44,6 +44,14 @@ async def predict(file: UploadFile = File(...)):
         # Baca CSV langsung dari stream
         df = pd.read_csv(file.file)
 
+        # Buang kolom target jika ada
+        if "SOM (%)" in df.columns:
+            df = df.drop(columns=["SOM (%)"])
+
+        # Hapus fitur 485nm yang memang tidak dipakai
+        if "485nm" in df.columns:
+            df = df.drop(columns=["485nm"])
+
         # Pastikan hanya kolom numerik yang dipakai
         X = df.select_dtypes(include=["number"])
 
