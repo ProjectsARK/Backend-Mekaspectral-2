@@ -1,24 +1,63 @@
 import os
+from datetime import datetime
+from typing import List, Union
+
 import pandas as pd
 import tensorflow as tf
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 
-# -------- Konfigurasi sederhana --------
-MODEL_PATH = os.getenv("MODEL_PATH", "model/soilsense_model.h5")
-MODEL = tf.keras.models.load_model(MODEL_PATH)   # dipanggil sekali saja
+# ───── Konfigurasi ──────────────────────────────────────────────
+MODEL_PATH   = os.getenv("MODEL_PATH", "model/soilsense_model.h5")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "ann_raw_v1.0")
 
-app = FastAPI(title="SoilSense C-Organic API (.h5 single-file)")
+# Muat model sekali saja saat container start
+MODEL = tf.keras.models.load_model(MODEL_PATH)
 
+# ───── Aplikasi FastAPI ────────────────────────────────────────
+app = FastAPI(
+    title   = "SoilSense C-Organic API",
+    version = MODEL_VERSION
+)
+
+# ——— health-check sederhana (dipakai LB / Codespaces) ———
+@app.get("/health")
+def health():
+    """Return 200 jika model berhasil dimuat."""
+    return {
+        "status"        : "ok",
+        "model_version" : MODEL_VERSION,
+        "server_time"   : datetime.utcnow().isoformat() + "Z"
+    }
+
+# ——— endpoint utama inferensi ————————————
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     """
-    Terima CSV (FormData), kembalikan %C-organik.
+    Terima file CSV via multipart/form-data dan kembalikan
+    prediksi %C-organik.
+
+    • Jika CSV berisi 1 baris ⇒ { "c_org_pct": <float> }
+    • Jika >1 baris        ⇒ { "predictions": [float, …] }
     """
     try:
+        # Baca CSV langsung dari stream
         df = pd.read_csv(file.file)
-        X = df.select_dtypes(include=["number"])   # drop kolom waktu jika ada
-        y_pred = MODEL.predict(X)[0][0]            # asumsi output skalar
-        return {"c_org_pct": float(y_pred)}
+
+        # Pastikan hanya kolom numerik yang dipakai
+        X = df.select_dtypes(include=["number"])
+
+        # Jalankan prediksi
+        y_pred: List[float] = MODEL.predict(X).ravel().tolist()
+
+        # Bangun payload adaptif
+        if len(y_pred) == 1:
+            return {"c_org_pct": y_pred[0]}
+        return {"predictions": y_pred}
+
     except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
+        # Pesan error ramah untuk klien
+        return JSONResponse(
+            status_code = 400,
+            content     = {"error": str(e)}
+        )
